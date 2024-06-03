@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 const Wrapper = styled.div`
   position: absolute;
-  top: 700px;
+  top: 300px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1;

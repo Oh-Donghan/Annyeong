@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import styled from 'styled-components';
 import { isDarkAtom } from '../../store/atom';
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 
 const Header = styled.header`
   display: flex;
@@ -82,7 +82,9 @@ export default function Layout() {
             </IconContainer>
           </Indicator>
         </BtnWrapper>
-        <Log>LogIn</Log>
+        <Log>
+          <Link to='/login'>Log in</Link>
+        </Log>
       </Header>
       <Outlet />
     </>

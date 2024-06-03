@@ -63,7 +63,7 @@ const StyledFontAwesomeIcon = styled(FontAwesomeIcon)`
 
 const Form = styled.form`
   position: relative;
-  top: 270px;
+  top: 380px;
   left: 50%;
   transform: translateX(-50%);
   transition: all 0.5s;
@@ -85,7 +85,7 @@ const Dropdown = styled.div`
   width: 100%;
   background-color: ${(props) => props.theme.textColor};
   color: ${(props) => props.theme.bgColor};
-  border: 1px solid ${props => props.theme.textColor};
+  border: 1px solid ${(props) => props.theme.textColor};
   border-radius: 8px;
   max-height: 300px;
   overflow-y: auto;
@@ -140,7 +140,7 @@ export default function Home() {
   const [warning, setWarning] = useState<number | null>(null);
   const [filteredList, setFilteredList] = useState<CountryData[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const { isLoading, data, error, isError } = useQuery({
     queryKey: ['countryData'],
     queryFn: fetchData,
@@ -168,20 +168,32 @@ export default function Home() {
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // if (inputValue) {
-    //   const selectedCountry = data.find(
-    //     (country) => country.country_nm === inputValue
-    //   );
-    //   if (selectedCountry) {
-    //     navigate(`/country/${encodeURIComponent(selectedCountry.country_eng_nm.toLowerCase())}`);
-    //   }
-    // }
+    if (inputValue) {
+      const selectedCountry = data?.find(
+        (country) => country?.country_nm === inputValue
+      );
+      if (selectedCountry?.alarm_lvl >= 3) {
+        alert('여행 위험 국가입니다');
+        return;
+      } else {
+        navigate(
+          `/country/${encodeURIComponent(
+            selectedCountry.country_eng_nm.toLowerCase()
+          )}`
+        );
+      }
+    }
   };
 
-  const onClick = (countryName: string, countryEngName: string) => {
-    setInputValue('');
+  const onClick = (countryName: string) => {
+    setInputValue(countryName);
+    // setInputValue('');
     setFilteredList([]);
-    console.log(countryEngName);
+    // console.log(countryEngName);
+    // if (countryAlarm >= 3) {
+    //   alert('여행 위험 국가입니다');
+    //   return
+    // }
     // navigate(`/country/${encodeURIComponent(countryEngName.toLowerCase())}`);
   };
 
@@ -202,15 +214,15 @@ export default function Home() {
               placeholder='원하는 나라를 검색하세요.'
               required
             />
-            <StyledFontAwesomeIcon icon={faMagnifyingGlass} />
+            <button type='submit'>
+              <StyledFontAwesomeIcon icon={faMagnifyingGlass} />
+            </button>
             {inputValue && filteredList.length > 0 && (
               <Dropdown>
                 {filteredList?.map((country, index) => (
                   <DropdownList
                     key={country.country_iso_alp2}
-                    onClick={() =>
-                      onClick(country.country_nm, country.country_eng_nm)
-                    }
+                    onClick={() => onClick(country.country_nm)}
                     onMouseEnter={() => setWarning(index)}
                     onMouseLeave={() => setWarning(null)}
                   >

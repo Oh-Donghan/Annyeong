@@ -17,7 +17,6 @@ const GlobalStyle = createGlobalStyle`
     background-color: ${(props) => props.theme.bgColor};
     color: ${(props) => props.theme.textColor};
     height: 100%;
-    overflow: hidden;
   }
   a {
     text-decoration: none;
