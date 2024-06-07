@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { styled } from 'styled-components';
 import { CountryData, fetchData } from '../store/api';
 import { useEffect, useState } from 'react';
-import PlanB from './Plan copy';
+import Planner from '../components/planner/Planner';
 
 const Wrapper = styled.div`
   display: flex;
@@ -19,7 +19,6 @@ const Title = styled.h1`
 
 const Section = styled.div`
   width: 100%;
-
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,26 +34,29 @@ const GmapSection = styled.div`
 
 const PlanSection = styled.div`
   width: 90%;
-  height: 100%;
-  margin: 50px 0;
-  border-radius: 3%;
-  background-color: #6c1313;
+  height: 600px;
 `;
 
 const SelectBtn = styled.div`
   display: flex;
+  margin-bottom: 20px;
   height: 30px;
-  background-color: #000;
-`
+  gap: 15px;
+  font-weight: bold;
+`;
 
 const MapBtn = styled.button`
-  width: 100px;
-  border: 1px solid #fff;
-  `;
+  width: 120px;
+  color: ${(props) => props.theme.bgColor};
+  background-color: ${(props) => props.theme.textColor};
+  border-radius: 5px;
+`;
 
 const PlanBtn = styled.button`
-  width: 100px;
-  border: 1px solid #fff;
+  width: 120px;
+  color: ${(props) => props.theme.bgColor};
+  background-color: ${(props) => props.theme.textColor};
+  border-radius: 5px;
 `;
 
 type ISection = 'map' | 'plan';
@@ -92,11 +94,11 @@ export default function Plan() {
         <PlanBtn onClick={() => setSection('plan')}>계획 버튼</PlanBtn>
       </SelectBtn>
       <Section>
-        <GmapSection style={{ display: section === 'map' ? 'block' : 'none' }}>
-
-        </GmapSection>
+        <GmapSection
+          style={{ display: section === 'map' ? 'block' : 'none' }}
+        ></GmapSection>
         <PlanSection style={{ display: section === 'plan' ? 'block' : 'none' }}>
-          <PlanB />
+          <Planner />
         </PlanSection>
       </Section>
     </Wrapper>

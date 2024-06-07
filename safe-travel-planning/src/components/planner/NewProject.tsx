@@ -1,71 +1,117 @@
-import { useRef } from 'react';
-import Input from './Input';
-import Modal from './Modal';
+import { useState } from 'react';
+import styled from 'styled-components';
 
-export default function NewProject({ onAdd, onCancel }) {
-  const modal = useRef();
+const Wrapper = styled.div`
+  width: 70%;
+  height: 100%;
+  margin-top: 4rem;
+`;
 
-  const title = useRef();
-  const description = useRef();
-  const dueDate = useRef();
+const ButtonBox = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 15px;
+  font-weight: bold;
+`;
 
-  function handleSave() {
-    const enteredTitle = title.current.value;
-    const enteredDescription = description.current.value;
-    const enteredDeuDate = dueDate.current.value;
+const CancelBtn = styled.button``;
 
-    if (
-      enteredTitle.trim() === '' ||
-      enteredDescription.trim() === '' ||
-      enteredDeuDate.trim() === ''
-    ) {
-      modal.current.open();
-      return;
-    }
+const SaveBtn = styled.button`
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: ${(props) => props.theme.bgColor};
+  color: ${(props) => props.theme.textColor};
+`;
 
-    onAdd({
-      title: enteredTitle,
-      description: enteredDescription,
-      dueDate: enteredDeuDate,
-    });
+const InputBox = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Field = styled.p`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0;
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: bold;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.25rem;
+  background-color: #fff;
+  border-bottom-width: 2px;
+  border-radius: 0.125rem;
+  border-color: #d1d5db;
+  &:focus {
+    outline: none;
+    border-color: #4b5563;
+  }
+  /* For webkit browsers (Chrome, Safari, Edge) */
+  &::-webkit-datetime-edit {
+    color: #4b5563; /* 텍스트 컬러 변경 */
   }
 
+  /* For Firefox */
+  &::-moz-datetime-edit {
+    color: #4b5563; /* 텍스트 컬러 변경 */
+  }
+
+  /* For Microsoft Edge */
+  &::-ms-datetime-edit {
+    color: #4b5563; /* 텍스트 컬러 변경 */
+  }
+`;
+
+const TextArea = styled(Input).attrs({ as: 'textarea' })``;
+
+interface IProjectProps {
+  onSave: (title: string, description: string, date: string) => void;
+  onCancel: () => void;
+}
+
+export default function NewProject({ onSave, onCancel }: IProjectProps) {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState('');
+
   return (
-    <>
-      <Modal ref={modal} buttonCaption='Okay'>
-        <h2 className='text-xl font-bold text-stone-700 my-4'>Invalid Input</h2>
-        <p className='text-stone-600 mb-4'>
-          Oops ... looks like you forgot to enter a value.
-        </p>
-        <p className='text-stone-600 mb-4'>
-          Please make sure you provide a valid value for every input field.
-        </p>
-      </Modal>
-      <div className=' w-[35rem] mt-16'>
-        <menu className='flex items-center justify-end gap-4 my-4'>
-          <li>
-            <button
-              className='text-stone-800 hover:text-stone-950'
-              onClick={onCancel}
-            >
-              Cancel
-            </button>
-          </li>
-          <li>
-            <button
-              className='px-6 py-2 rounded-md bg-stone-800 text-stone-50 hover:bg-stone-950'
-              onClick={handleSave}
-            >
-              Save
-            </button>
-          </li>
-        </menu>
-        <div>
-          <Input type='text' ref={title} label='Title' />
-          <Input ref={description} label='Description' textarea />
-          <Input type='date' ref={dueDate} label='Deu Date' />
-        </div>
-      </div>
-    </>
+    <Wrapper>
+      <ButtonBox>
+        <CancelBtn onClick={onCancel}>취소</CancelBtn>
+        <SaveBtn onClick={() => onSave(title, description, date)}>저장</SaveBtn>
+      </ButtonBox>
+      <InputBox>
+        <Field>
+          <Label>제목</Label>
+          <Input
+            type='text'
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </Field>
+        <Field>
+          <Label>설명</Label>
+          <TextArea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </Field>
+        <Field>
+          <Label>날짜</Label>
+          <Input
+            type='date'
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </Field>
+      </InputBox>
+    </Wrapper>
   );
 }
