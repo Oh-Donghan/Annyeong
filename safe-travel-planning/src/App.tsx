@@ -6,6 +6,8 @@ import { useRecoilValue } from 'recoil';
 import { isDarkAtom } from './store/atom';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes/Router';
+import { auth } from '../firebase';
+import { useEffect } from 'react';
 
 const GlobalStyle = createGlobalStyle`
   ${reset}
@@ -26,6 +28,13 @@ const GlobalStyle = createGlobalStyle`
 
 function App() {
   const isDark = useRecoilValue(isDarkAtom);
+  const init = async () => {
+    await auth.authStateReady();
+  };
+
+  useEffect(() => {
+    init();
+  }, []);
 
   return (
     <ThemeProvider theme={isDark ? darkTheme : lightTheme}>

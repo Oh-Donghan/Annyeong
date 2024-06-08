@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import NewProject from './NewProject';
+import { Unsubscribe } from 'firebase/auth';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '../../../firebase';
+import DailyPlan from './DailyPlan';
 
 const Overlay = styled.div`
   position: fixed;
@@ -70,10 +74,12 @@ const List = styled.ul`
   padding: 20px;
 `;
 
-const ListItem = styled.li`
-  padding: 10px 10px 5px;
+const ListItem = styled.li<{ $isSelected: boolean }>`
+  padding: 15px 10px 5px;
   border-bottom: 1px solid #ccc;
-  color: ${(props) => props.theme.textColor};
+  color: ${(props) => (props.$isSelected ? '#dda94b' : props.theme.textColor)};
+  border-bottom: 1px solid
+    ${(props) => (props.$isSelected ? '#dda94b' : '#ccc')};
   transition: all 0.2s ease-in-out;
   &:hover {
     border-bottom: 1px solid #dda94b;
@@ -82,44 +88,98 @@ const ListItem = styled.li`
   }
 `;
 
-interface IProject {
-  id: number;
+export interface IPlans {
   title: string;
+  createdAt: string;
+  userId: string;
+  id: string;
   description: string;
-  date: string;
+  username: string;
 }
 
 export default function Planner() {
-  const [projects, setProjects] = useState<IProject[]>([]);
-  const [showNewProject, setShowNewProject] = useState(false);
+  const [showNewPlan, setShowNewPlan] = useState<
+    'newProject' | 'dailyPlan' | null
+  >(null);
+  const [selectedPlan, setSelectedPlan] = useState<IPlans | null>(null);
+  const [plans, setPlans] = useState<IPlans[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const addProject = (title: string, description: string, date: string) => {
-    const newProject = { id: Date.now(), title, description, date };
-    setProjects([...projects, newProject]);
-    setShowNewProject(false);
-  };
+  useEffect(() => {
+    let unsubscribe: Unsubscribe | null = null;
+    const fetchPlans = async () => {
+      const plansQuery = query(
+        collection(db, 'plan'),
+        orderBy('createdAt', 'desc')
+      );
+
+      unsubscribe = await onSnapshot(plansQuery, (snapshot) => {
+        const plans = snapshot.docs.map((doc) => {
+          const { title, createdAt, userId, description, username } =
+            doc.data();
+          return {
+            title,
+            createdAt,
+            userId,
+            id: doc.id,
+            description,
+            username,
+          };
+        });
+        setPlans(plans);
+      });
+    };
+
+    fetchPlans();
+
+    return () => {
+      unsubscribe && unsubscribe();
+    };
+  }, []);
 
   const onCancel = () => {
-    setShowNewProject(false);
+    setShowNewPlan(null);
+    setSelectedPlan(null);
   };
+
+  const onClickPlan = (project: IPlans) => {
+    setSelectedPlan(project);
+    setSelectedId(project.id);
+    setShowNewPlan('dailyPlan');
+  };
+
+  const onClickNewPlan = () => {
+    setShowNewPlan('newProject');
+  };
+
+  const resetView = () => {
+    setShowNewPlan(null);
+    setSelectedPlan(null);
+  }
 
   return (
     <Wrapper>
       <Sidebar>
         <Title>내 여행계획</Title>
-        <Button onClick={() => setShowNewProject(true)}>계획 세우기</Button>
+        <Button onClick={onClickNewPlan}>계획 세우기</Button>
         <List>
-          {projects.map((project) => (
-            <ListItem key={project.id}>{project.title}</ListItem>
+          {plans.map((plan) => (
+            <ListItem
+              key={plan.id}
+              onClick={() => onClickPlan(plan)}
+              $isSelected={selectedId === plan.id}
+            >
+              {plan.title}
+            </ListItem>
           ))}
         </List>
       </Sidebar>
       <Main>
-        {showNewProject ? (
-          <NewProject onSave={addProject} onCancel={onCancel} />
-        ) : (
-          <Title>아직 계획이 없습니다.</Title>
+        {showNewPlan === 'newProject' && <NewProject onCancel={onCancel} />}
+        {showNewPlan === 'dailyPlan' && selectedPlan && (
+          <DailyPlan projectId={selectedPlan.id} onResetView={resetView} />
         )}
+        {showNewPlan === null && <Title>아직 계획이 없습니다.</Title>}
       </Main>
     </Wrapper>
   );

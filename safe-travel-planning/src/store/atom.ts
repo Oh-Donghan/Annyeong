@@ -1,4 +1,5 @@
 import { atom } from 'recoil';
+import { UserProps } from '../components/layout/AuthProvider';
 
 export const isDarkAtom = atom({
   key: 'isDark',
@@ -15,4 +16,9 @@ export const isDarkAtom = atom({
       });
     },
   ],
+});
+
+export const authState = atom<UserProps | null>({
+  key: 'authState',
+  default: null,
 });

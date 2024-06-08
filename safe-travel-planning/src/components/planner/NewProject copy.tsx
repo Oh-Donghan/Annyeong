@@ -1,11 +1,7 @@
 import { useState } from 'react';
-import { useRecoilValue } from 'recoil';
 import styled from 'styled-components';
-import { authState } from '../../store/atom';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../../../firebase';
 
-const Form = styled.form`
+const Wrapper = styled.div`
   width: 70%;
   height: 100%;
   margin-top: 4rem;
@@ -53,7 +49,6 @@ const Input = styled.input`
   border-bottom-width: 2px;
   border-radius: 0.125rem;
   border-color: #d1d5db;
-  color: #000;
   &:focus {
     outline: none;
     border-color: #4b5563;
@@ -77,45 +72,20 @@ const Input = styled.input`
 const TextArea = styled(Input).attrs({ as: 'textarea' })``;
 
 interface IProjectProps {
+  onSave: (title: string, description: string, date: string) => void;
   onCancel: () => void;
 }
 
-export default function NewProject({ onCancel }: IProjectProps) {
-  const user = useRecoilValue(authState);
+export default function NewProject({ onSave, onCancel }: IProjectProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!user || title === '' || description === '' || date === '') return;
-
-    try {
-      setIsLoading(true);
-      await addDoc(collection(db, 'plan'), {
-        title,
-        description,
-        createdAt: date,
-        username: user.displayName || 'Anonymous',
-        userId: user.uid,
-      });
-      setTitle('');
-      setDescription('');
-      setDate('');
-    } catch (e) {
-      console.log(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
-    <Form onSubmit={onSubmit}>
+    <Wrapper>
       <ButtonBox>
         <CancelBtn onClick={onCancel}>취소</CancelBtn>
-        <SaveBtn type='submit'>{isLoading ? '저장중..' : '저장'}</SaveBtn>
+        <SaveBtn onClick={() => onSave(title, description, date)}>저장</SaveBtn>
       </ButtonBox>
       <InputBox>
         <Field>
@@ -142,6 +112,6 @@ export default function NewProject({ onCancel }: IProjectProps) {
           />
         </Field>
       </InputBox>
-    </Form>
+    </Wrapper>
   );
 }

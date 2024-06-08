@@ -2,8 +2,9 @@ import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import styled from 'styled-components';
-import { isDarkAtom } from '../../store/atom';
-import { Link, Outlet } from 'react-router-dom';
+import { authState, isDarkAtom } from '../../store/atom';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { auth } from '../../../firebase';
 
 const Header = styled.header`
   display: flex;
@@ -71,6 +72,16 @@ export default function Layout() {
   const isDark = useRecoilValue(isDarkAtom);
   const setDarkAtom = useSetRecoilState(isDarkAtom);
   const toggleDarkAtom = () => setDarkAtom((prev) => !prev);
+  const navigate = useNavigate();
+  const currentUser = useRecoilValue(authState);
+  
+  const onLogOut = async () => {
+    const ok = confirm('로그아웃 하시겠습니까?');
+    if (ok) {
+      await auth.signOut();
+      navigate('/');
+    }
+  }
 
   return (
     <>
@@ -83,7 +94,7 @@ export default function Layout() {
           </Indicator>
         </BtnWrapper>
         <Log>
-          <Link to='/login'>Log in</Link>
+          {currentUser ? <span onClick={onLogOut}>Log out</span> : <Link to='/login'>Log in</Link>}
         </Log>
       </Header>
       <Outlet />
