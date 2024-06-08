@@ -8,6 +8,7 @@ import {
   doc,
   onSnapshot,
   query,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '../../../firebase';
 
@@ -84,6 +85,14 @@ const ListItem = styled.li`
 
 const DeleteBtn = styled.button``;
 
+const ItemWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+`;
+
+const ItemInput = styled.input``;
+
 interface IDailyProps {
   projectId: string;
   onResetView: () => void;
@@ -136,6 +145,11 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
       unsubscribeTasks();
     };
   }, [projectId]);
+
+  const toggleCompleted = async (taskId: string, isCompleted: boolean) => {
+    const taskDocRef = doc(db, 'plan', projectId, 'tasks', taskId);
+    await updateDoc(taskDocRef, { completed: !isCompleted });
+  };
 
   const addTask = async () => {
     if (task.trim() === '') return;
@@ -191,7 +205,10 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
       <List>
         {tasks.map((task) => (
           <ListItem key={task.id}>
-            <span>{task.text}</span>
+            <ItemWrapper>
+              <ItemInput type='checkbox' checked={task.completed} onChange={() => toggleCompleted(task.id, task.completed)} />
+              <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>{task.text}</span>
+            </ItemWrapper>
             <DeleteBtn onClick={() => deleteTest(task.id)}>삭제</DeleteBtn>
           </ListItem>
         ))}
