@@ -172,15 +172,21 @@ export default function Home() {
       const selectedCountry = data?.find(
         (country) => country?.country_nm === inputValue
       );
-      if (selectedCountry?.alarm_lvl >= 3) {
-        alert('여행 위험 국가입니다');
-        return;
-      } else {
-        navigate(
-          `/country/${encodeURIComponent(
-            selectedCountry.country_eng_nm.toLowerCase()
-          )}`
-        );
+      if (selectedCountry) {
+        const { alarm_lvl, country_eng_nm } = selectedCountry;
+        if (alarm_lvl === 4) {
+          alert('여행 금지 국가입니다');
+          return;
+        } else if (alarm_lvl === 3) {
+          alert('여행 위험 국가입니다');
+          navigate(
+            `/country/${encodeURIComponent(country_eng_nm.toLowerCase())}`
+          );
+        } else {
+          navigate(
+            `/country/${encodeURIComponent(country_eng_nm.toLowerCase())}`
+          );
+        }
       }
     }
   };

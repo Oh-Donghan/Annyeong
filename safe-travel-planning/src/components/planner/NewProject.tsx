@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import styled from 'styled-components';
 import { authState } from '../../store/atom';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { useParams } from 'react-router-dom';
 
 const Form = styled.form`
   width: 70%;
@@ -86,15 +87,26 @@ export default function NewProject({ onCancel }: IProjectProps) {
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { countryId } = useParams();
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!user || title === '' || description === '' || date === '') return;
+    if (!user.uid) {
+      console.error('User UID is undefined');
+      return;
+    }
+    if (!countryId) {
+      console.error('Country name is undefined');
+      return;
+    }
 
     try {
       setIsLoading(true);
-      await addDoc(collection(db, 'plan'), {
+      const countryDocRef = doc(db, 'users', user.uid, 'countries', countryId);
+      const plansColRef = collection(countryDocRef, 'plans');
+      await addDoc(plansColRef, {
         title,
         description,
         createdAt: date,

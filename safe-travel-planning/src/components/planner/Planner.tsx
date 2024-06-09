@@ -2,18 +2,16 @@ import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import NewProject from './NewProject';
 import { Unsubscribe } from 'firebase/auth';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, doc, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import DailyPlan from './DailyPlan';
+import { useRecoilValue } from 'recoil';
+import { authState } from '../../store/atom';
+import { useParams } from 'react-router-dom';
 
-const Overlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5); /* 반투명 검정색 배경 */
-  z-index: 999; /* 다른 요소들보다 앞에 배치 */
+const PlanSection = styled.div`
+  width: 90%;
+  height: 600px;
 `;
 
 const Wrapper = styled.div`
@@ -24,6 +22,18 @@ const Wrapper = styled.div`
   border: 3px solid ${(props) => props.theme.textColor};
   border-radius: 10px;
   overflow: hidden;
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 36px;
+  background: rgba(45, 45, 45, 0.647); /* 반투명 검정색 배경 */
+  z-index: 999; /* 다른 요소들보다 앞에 배치 */
 `;
 
 const Title = styled.h1`
@@ -104,38 +114,35 @@ export default function Planner() {
   const [selectedPlan, setSelectedPlan] = useState<IPlans | null>(null);
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const currentUser = useRecoilValue(authState);
+  const {countryId} = useParams();
 
   useEffect(() => {
     let unsubscribe: Unsubscribe | null = null;
-    const fetchPlans = async () => {
-      const plansQuery = query(
-        collection(db, 'plan'),
-        orderBy('createdAt', 'desc')
-      );
 
-      unsubscribe = await onSnapshot(plansQuery, (snapshot) => {
-        const plans = snapshot.docs.map((doc) => {
-          const { title, createdAt, userId, description, username } =
-            doc.data();
-          return {
-            title,
-            createdAt,
-            userId,
-            id: doc.id,
-            description,
-            username,
-          };
-        });
-        setPlans(plans);
+    if (currentUser && countryId) {
+      const countryDocRef = doc(db, 'users', currentUser.uid, 'countries', countryId);
+      const plansQuery = query(collection(countryDocRef, 'plans'), orderBy('createdAt', 'desc'));
+
+      unsubscribe = onSnapshot(plansQuery, (snapshot) => {
+        const fetchedPlans = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().title,
+          createdAt: doc.data().createdAt,
+          userId: doc.data().userId,
+          description: doc.data().description,
+          username: doc.data().username,
+        }));
+        setPlans(fetchedPlans);
       });
-    };
-
-    fetchPlans();
+    }
 
     return () => {
-      unsubscribe && unsubscribe();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
-  }, []);
+  }, [currentUser, countryId]);
 
   const onCancel = () => {
     setShowNewPlan(null);
@@ -155,32 +162,39 @@ export default function Planner() {
   const resetView = () => {
     setShowNewPlan(null);
     setSelectedPlan(null);
-  }
+  };
 
   return (
-    <Wrapper>
-      <Sidebar>
-        <Title>내 여행계획</Title>
-        <Button onClick={onClickNewPlan}>계획 세우기</Button>
-        <List>
-          {plans.map((plan) => (
-            <ListItem
-              key={plan.id}
-              onClick={() => onClickPlan(plan)}
-              $isSelected={selectedId === plan.id}
-            >
-              {plan.title}
-            </ListItem>
-          ))}
-        </List>
-      </Sidebar>
-      <Main>
-        {showNewPlan === 'newProject' && <NewProject onCancel={onCancel} />}
-        {showNewPlan === 'dailyPlan' && selectedPlan && (
-          <DailyPlan projectId={selectedPlan.id} onResetView={resetView} />
+    <PlanSection>
+      <Wrapper>
+        {!currentUser && (
+          <Overlay>
+            <div>로그인 시 이용가능</div>
+          </Overlay>
         )}
-        {showNewPlan === null && <Title>아직 계획이 없습니다.</Title>}
-      </Main>
-    </Wrapper>
+        <Sidebar>
+          <Title>내 여행계획</Title>
+          <Button onClick={onClickNewPlan}>계획 세우기</Button>
+          <List>
+            {plans.map((plan) => (
+              <ListItem
+                key={plan.id}
+                onClick={() => onClickPlan(plan)}
+                $isSelected={selectedId === plan.id}
+              >
+                {plan.title}
+              </ListItem>
+            ))}
+          </List>
+        </Sidebar>
+        <Main>
+          {showNewPlan === 'newProject' && <NewProject onCancel={onCancel} />}
+          {showNewPlan === 'dailyPlan' && selectedPlan && (
+            <DailyPlan projectId={selectedPlan.id} onResetView={resetView} />
+          )}
+          {showNewPlan === null && <Title>아직 계획이 없습니다.</Title>}
+        </Main>
+      </Wrapper>
+    </PlanSection>
   );
 }

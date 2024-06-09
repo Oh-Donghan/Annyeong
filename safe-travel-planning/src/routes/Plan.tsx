@@ -1,9 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'react-router-dom';
+import {
+  Link,
+  Outlet,
+  useMatch,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import { styled } from 'styled-components';
 import { CountryData, fetchData } from '../store/api';
 import { useEffect, useState } from 'react';
-import Planner from '../components/planner/Planner';
 
 const Wrapper = styled.div`
   display: flex;
@@ -12,7 +17,7 @@ const Wrapper = styled.div`
 `;
 
 const Title = styled.h1`
-  margin: 30px 0;
+  margin: 30px 0 20px;
   text-align: center;
   font-size: 30px;
 `;
@@ -26,45 +31,35 @@ const Section = styled.div`
   max-width: 1280px;
 `;
 
-const GmapSection = styled.div`
-  width: 90%;
-  height: 500px;
-  background-color: #059418;
+const ButtonSection = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 15px 0;
+  gap: 10px;
 `;
 
-const PlanSection = styled.div`
-  width: 90%;
-  height: 600px;
-`;
-
-const SelectBtn = styled.div`
-  display: flex;
-  margin-bottom: 20px;
-  height: 30px;
-  gap: 15px;
+const SectionButton = styled.span<{ $isActive: boolean }>`
+  width: 120px;
+  padding: 8px 0;
+  text-align: center;
   font-weight: bold;
-`;
-
-const MapBtn = styled.button`
-  width: 120px;
-  color: ${(props) => props.theme.bgColor};
+  color: ${(props) =>
+    props.$isActive ? props.theme.pointColor : props.theme.bgColor};
+  /* color: ${props => props.theme.bgColor}; */
   background-color: ${(props) => props.theme.textColor};
   border-radius: 5px;
+  a {
+    display: block;
+    /* opacity: ${props => props.$isActive ? 1 : 0.7}; */
+  }
 `;
-
-const PlanBtn = styled.button`
-  width: 120px;
-  color: ${(props) => props.theme.bgColor};
-  background-color: ${(props) => props.theme.textColor};
-  border-radius: 5px;
-`;
-
-type ISection = 'map' | 'plan';
 
 export default function Plan() {
   const [title, setTitle] = useState('');
-  const [section, setSection] = useState<ISection>('map');
-  const params = useParams();
+  const { countryId } = useParams();
+  const mapMatch = useMatch('/country/:id/map');
+  const planMatch = useMatch('/country/:id/planner');
+  const navigate = useNavigate();
   const { data } = useQuery({
     queryKey: ['countryData'],
     queryFn: fetchData,
@@ -76,7 +71,7 @@ export default function Plan() {
     if (data) {
       const filtered = data.find(
         (country: CountryData) =>
-          country.country_eng_nm.toLowerCase() === params.id
+          country.country_eng_nm.toLowerCase() === countryId
       );
       if (filtered) {
         setTitle(filtered.country_nm);
@@ -84,22 +79,28 @@ export default function Plan() {
         console.log('none');
       }
     }
-  }, [data, params.id]);
+  }, [data, countryId]);
+
+  // 첫 렌더링 시 지도 페이지로 리디렉션
+  useEffect(() => {
+    if (!mapMatch && !planMatch) {
+      navigate(`/country/${countryId}/map`);
+    }
+  }, [countryId, mapMatch, planMatch, navigate]);
 
   return (
     <Wrapper>
       <Title>{title}</Title>
-      <SelectBtn>
-        <MapBtn onClick={() => setSection('map')}>지도 버튼</MapBtn>
-        <PlanBtn onClick={() => setSection('plan')}>계획 버튼</PlanBtn>
-      </SelectBtn>
+      <ButtonSection>
+        <SectionButton $isActive={mapMatch !== null}>
+          <Link to={`/country/${countryId}/map`}>지도 버튼</Link>
+        </SectionButton>
+        <SectionButton $isActive={planMatch !== null}>
+          <Link to={`/country/${countryId}/planner`}>계획 버튼</Link>
+        </SectionButton>
+      </ButtonSection>
       <Section>
-        <GmapSection
-          style={{ display: section === 'map' ? 'block' : 'none' }}
-        ></GmapSection>
-        <PlanSection style={{ display: section === 'plan' ? 'block' : 'none' }}>
-          <Planner />
-        </PlanSection>
+        <Outlet context={{ countryId }} />
       </Section>
     </Wrapper>
   );

@@ -4,6 +4,8 @@ import Home from './Home';
 import Login from './Login';
 import CreateAccount from './CreateAccount';
 import Plan from './Plan';
+import Gmap from '../components/Gmap/Gmap';
+import Planner from '../components/planner/Planner';
 
 export const router = createBrowserRouter([
   {
@@ -15,8 +17,18 @@ export const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: '/country/:id',
+        path: '/country/:countryId',
         element: <Plan />,
+        children: [
+          {
+            path: 'map',
+            element: <Gmap />,
+          },
+          {
+            path: 'planner',
+            element: <Planner />,
+          }
+        ]
       },
       {
         path: '/login',

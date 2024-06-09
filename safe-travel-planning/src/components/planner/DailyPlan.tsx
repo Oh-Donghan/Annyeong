@@ -11,6 +11,9 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '../../../firebase';
+import { useParams } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
+import { authState } from '../../store/atom';
 
 const Wrapper = styled.div`
   width: 80%;
@@ -108,18 +111,22 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
   const [plan, setPlan] = useState<IPlans | null>(null);
   const [task, setTask] = useState<string>('');
   const [tasks, setTasks] = useState<ITask[]>([]);
+  const {countryId} = useParams();
+  const currentUser = useRecoilValue(authState);
 
   useEffect(() => {
-    const docRef = doc(db, 'plan', projectId);
+    if (!currentUser || !countryId) return;
+
+    const docRef = doc(db, 'users', currentUser.uid, 'countries', countryId, 'plans', projectId);
 
     // onSnapshot으로 문서의 변경사항을 실시간으로 수신
     const unsubscribe = onSnapshot(docRef, (doc) => {
       if (doc.exists()) {
         setPlan({
+          id: doc.id,
           title: doc.data().title,
           createdAt: doc.data().createdAt,
           userId: doc.data().userId,
-          id: doc.id,
           description: doc.data().description,
           username: doc.data().username,
         });
@@ -144,24 +151,27 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
       unsubscribe();
       unsubscribeTasks();
     };
-  }, [projectId]);
+  }, [currentUser, countryId, projectId]);
 
   const toggleCompleted = async (taskId: string, isCompleted: boolean) => {
-    const taskDocRef = doc(db, 'plan', projectId, 'tasks', taskId);
+    if (!currentUser || !countryId) return;
+
+    const taskDocRef = doc(db, 'users', currentUser.uid, 'countries', countryId, 'plans', projectId, 'tasks', taskId);
     await updateDoc(taskDocRef, { completed: !isCompleted });
   };
 
   const addTask = async () => {
-    if (task.trim() === '') return;
+    if (task.trim() === '' || !currentUser || !countryId) return;
 
-    const docRef = doc(db, 'plan', projectId);
-    const tasksCol = collection(docRef, 'tasks');
+    const tasksCol = collection(db, 'users', currentUser.uid, 'countries', countryId, 'plans', projectId, 'tasks');
     await addDoc(tasksCol, { text: task, completed: false });
     setTask('');
   };
 
   const deletePlan = async () => {
-    const docRef = doc(db, 'plan', projectId);
+    if (!currentUser || !countryId) return;
+
+    const docRef = doc(db, 'users', currentUser.uid, 'countries', countryId, 'plans', projectId);
     try {
       await deleteDoc(docRef);
       onResetView();
@@ -170,8 +180,10 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
     }
   };
 
-  const deleteTest = async (taskId: string) => {
-    const taskDocRef = doc(db, 'plan', projectId, 'tasks', taskId);
+  const deleteTask = async (taskId: string) => {
+    if (!currentUser || !countryId) return;
+
+    const taskDocRef = doc(db, 'users', currentUser.uid, 'countries', countryId, 'plans', projectId, 'tasks', taskId);
     await deleteDoc(taskDocRef);
   };
 
@@ -209,7 +221,7 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
               <ItemInput type='checkbox' checked={task.completed} onChange={() => toggleCompleted(task.id, task.completed)} />
               <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>{task.text}</span>
             </ItemWrapper>
-            <DeleteBtn onClick={() => deleteTest(task.id)}>삭제</DeleteBtn>
+            <DeleteBtn onClick={() => deleteTask(task.id)}>삭제</DeleteBtn>
           </ListItem>
         ))}
       </List>
