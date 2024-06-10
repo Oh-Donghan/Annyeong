@@ -8,7 +8,7 @@ import { auth } from '../../../firebase';
 
 const Header = styled.header`
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 20px;
   align-items: center;
   height: 40px;
@@ -64,9 +64,22 @@ const FaMoon = styled(FontAwesomeIcon)`
 `;
 
 const Log = styled.div`
-  color: ${(props) => props.theme.bgColor};
   margin-right: 30px;
+  color: ${(props) => props.theme.bgColor};
+  cursor: pointer;
 `;
+
+const HomeButton = styled.div`
+  margin-left: 25px;
+  color: ${(props) => props.theme.bgColor};
+  cursor: pointer;
+`;
+
+const Right = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+`
 
 export default function Layout() {
   const isDark = useRecoilValue(isDarkAtom);
@@ -74,28 +87,39 @@ export default function Layout() {
   const toggleDarkAtom = () => setDarkAtom((prev) => !prev);
   const navigate = useNavigate();
   const currentUser = useRecoilValue(authState);
-  
+
   const onLogOut = async () => {
     const ok = confirm('로그아웃 하시겠습니까?');
     if (ok) {
       await auth.signOut();
       navigate('/');
     }
-  }
+  };
+
+  const onHome = () => {
+    navigate('/');
+  };
 
   return (
     <>
       <Header>
-        <BtnWrapper onClick={toggleDarkAtom}>
-          <Indicator $isDark={isDark}>
-            <IconContainer>
-              {isDark ? <FaMoon icon={faMoon} /> : <FaSun icon={faSun} />}
-            </IconContainer>
-          </Indicator>
-        </BtnWrapper>
-        <Log>
-          {currentUser ? <span onClick={onLogOut}>Log out</span> : <Link to='/login'>Log in</Link>}
-        </Log>
+        <HomeButton onClick={onHome}>Home</HomeButton>
+        <Right>
+          <BtnWrapper onClick={toggleDarkAtom}>
+            <Indicator $isDark={isDark}>
+              <IconContainer>
+                {isDark ? <FaMoon icon={faMoon} /> : <FaSun icon={faSun} />}
+              </IconContainer>
+            </Indicator>
+          </BtnWrapper>
+          <Log>
+            {currentUser ? (
+              <span onClick={onLogOut}>Log out</span>
+            ) : (
+              <Link to='/login'>Log in</Link>
+            )}
+          </Log>
+        </Right>
       </Header>
       <Outlet />
     </>
