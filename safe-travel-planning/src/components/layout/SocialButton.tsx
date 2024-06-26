@@ -6,7 +6,6 @@ import googleLogo from '../../assets/google-logo.svg';
 
 const Button = styled.span`
   display: flex;
-  flex-direction: row-reverse;
   width:80%;
   margin-top: 50px;
   padding: 10px 20px;
@@ -16,7 +15,8 @@ const Button = styled.span`
   outline: 2px solid ${props => props.theme.textColor};
   color:#dda94b;
   font-weight: 500;
-  gap: 5px;
+  font-size: 18px;
+  gap: 8px;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -37,7 +37,7 @@ export default function SocialButton() {
   return (
     <Button onClick={onClick}>
       <img className='h-6' src={googleLogo} />
-      Continue with
+      계정으로 로그인
     </Button>
   )
 }

@@ -70,9 +70,13 @@ export default function Login() {
         <Input type='submit' value={isLoading ? 'Loading...' : '로그인'} />
       </Form>
       {error !== '' ? <Error>{error}</Error> : null}
-      <Switcher className=' dark:text-my-bg'>
-        Don't have an account? &nbsp;&nbsp;
-        <Link to='/create-account'>Create one &rarr;</Link>
+      <Switcher>
+        아직 회원이 아니신가요? &nbsp;&nbsp;
+        <Link to='/create-account'>회원가입 &rarr;</Link>
+      </Switcher>
+      <Switcher>
+        비밀번호를 잊으셨나요? &nbsp;&nbsp; 
+        <Link to='/forget-password'>비밀번호 재설정 &rarr;</Link>
       </Switcher>
       <SocialButton />
     </Wrapper>

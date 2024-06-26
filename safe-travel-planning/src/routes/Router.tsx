@@ -6,6 +6,7 @@ import CreateAccount from './CreateAccount';
 import Plan from './Plan';
 import Gmap from '../components/Gmap/Gmap';
 import Planner from '../components/planner/Planner';
+import ForgetPassword from './ForgetPassword';
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
         path: '/create-account',
         element: <CreateAccount />,
       },
+      {
+        path: '/forget-password',
+        element: <ForgetPassword />,
+      }
     ],
   },
 ]);

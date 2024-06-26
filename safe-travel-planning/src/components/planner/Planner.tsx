@@ -31,9 +31,10 @@ const Overlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 36px;
+  font-size: 48px;
   background: rgba(45, 45, 45, 0.647); /* 반투명 검정색 배경 */
   z-index: 999; /* 다른 요소들보다 앞에 배치 */
+  color: white;
 `;
 
 const Title = styled.h1`

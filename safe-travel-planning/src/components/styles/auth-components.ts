@@ -17,7 +17,7 @@ export const Title = styled.h1`
 `;
 
 export const Form = styled.form`
-  margin-top: 70px;
+  margin-top: 50px;
   margin-bottom: 14px;
   display: flex;
   flex-direction: column;
@@ -69,6 +69,5 @@ export const Switcher = styled.span`
   margin-top: 20px;
   a {
     color: #dda94b;
-    text-decoration: underline;
   }
 `;

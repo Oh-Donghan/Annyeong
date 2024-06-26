@@ -106,8 +106,8 @@ export default function CreateAccount() {
       </Form>
       {error !== '' ? <Error>{error}</Error> : null}
       <Switcher className=' dark:text-my-bg'>
-        Already have an account? &nbsp;&nbsp;{' '}
-        <Link to='/login'>Log in &rarr;</Link>
+        이미 계정이 있으신가요? &nbsp;&nbsp;{' '}
+        <Link to='/login'>로그인 &rarr;</Link>
       </Switcher>
       <SocialButton />
     </Wrapper>
