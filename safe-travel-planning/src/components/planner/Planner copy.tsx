@@ -1,18 +1,13 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore';
+import NewProject from './NewPlans';
+import { Unsubscribe } from 'firebase/auth';
+import { collection, doc, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import DailyPlan from './DailyPlan';
 import { useRecoilValue } from 'recoil';
 import { authState } from '../../store/atom';
 import { useParams } from 'react-router-dom';
-import NewPlans from './NewPlans';
 
 const PlanSection = styled.div`
   width: 90%;
@@ -105,14 +100,12 @@ const ListItem = styled.li<{ $isSelected: boolean }>`
 `;
 
 export interface IPlans {
-  countryId: string;
-  createdAt: number;
-  date: string;
-  description: string;
   title: string;
+  createdAt: string;
   userId: string;
+  id: string;
+  description: string;
   username: string;
-  planId: string;
 }
 
 export default function Planner() {
@@ -122,32 +115,39 @@ export default function Planner() {
   const [selectedPlan, setSelectedPlan] = useState<IPlans | null>(null);
   const [plans, setPlans] = useState<IPlans[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const user = useRecoilValue(authState);
-  const { countryId } = useParams();
+  const currentUser = useRecoilValue(authState);
+  const {countryId} = useParams();
 
   useEffect(() => {
-    if (!user || !countryId) return;
+    let unsubscribe: Unsubscribe | null = null;
 
-    const q = query(
-      collection(db, 'plans'),
-      where('userId', '==', user.uid),
-      where('countryId', '==', countryId),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const plansArray = snapshot.docs.map((doc) => ({
-        planId: doc.id,
-        ...(doc.data() as Omit<IPlans, 'planId'>),
-      }));
-      setPlans(plansArray);
-    });
+    if (currentUser && countryId) {
+      const countryDocRef = doc(db, 'users', currentUser.uid, 'countries', countryId);
+      const plansQuery = query(collection(countryDocRef, 'plans'), orderBy('createdAt', 'desc'));
 
-    return () => unsubscribe();
-  }, [user, countryId]);
+      unsubscribe = onSnapshot(plansQuery, (snapshot) => {
+        const fetchedPlans = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          title: doc.data().title,
+          createdAt: doc.data().createdAt,
+          userId: doc.data().userId,
+          description: doc.data().description,
+          username: doc.data().username,
+        }));
+        setPlans(fetchedPlans);
+      });
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [currentUser, countryId]);
 
   const onClickPlan = (project: IPlans) => {
     setSelectedPlan(project);
-    setSelectedId(project.planId);
+    setSelectedId(project.id);
     setShowNewPlan('dailyPlan');
   };
 
@@ -163,7 +163,7 @@ export default function Planner() {
   return (
     <PlanSection>
       <Wrapper>
-        {!user && (
+        {!currentUser && (
           <Overlay>
             <div>로그인 시 이용가능</div>
           </Overlay>
@@ -174,9 +174,9 @@ export default function Planner() {
           <List>
             {plans.map((plan) => (
               <ListItem
-                key={plan.planId}
+                key={plan.id}
                 onClick={() => onClickPlan(plan)}
-                $isSelected={selectedId === plan.planId}
+                $isSelected={selectedId === plan.id}
               >
                 {plan.title}
               </ListItem>
@@ -184,18 +184,11 @@ export default function Planner() {
           </List>
         </Sidebar>
         <Main>
-          {showNewPlan === 'newProject' && <NewPlans onResetView={resetView} />}
+          {showNewPlan === 'newProject' && <NewProject onResetView={resetView} />}
           {showNewPlan === 'dailyPlan' && selectedPlan && (
-            <DailyPlan
-              planId={selectedPlan.planId}
-              // key={selectedPlan.planId}
-              title={selectedPlan.title}
-              description={selectedPlan.description}
-              date={selectedPlan.date}
-              onResetView={resetView}
-            />
+            <DailyPlan projectId={selectedPlan.id} onResetView={resetView} />
           )}
-          {showNewPlan === null && <Title>여행계획을 만들어 보세요.</Title>}
+          {showNewPlan === null && <Title>아직 계획이 없습니다.</Title>}
         </Main>
       </Wrapper>
     </PlanSection>

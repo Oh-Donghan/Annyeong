@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { IPlans } from './Planner';
 import {
   DocumentData,
   addDoc,
   collection,
   deleteDoc,
   doc,
-  endBefore,
-  getDocs,
-  limit,
-  limitToLast,
   onSnapshot,
   orderBy,
   query,
-  startAfter,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { useParams } from 'react-router-dom';
@@ -23,22 +18,31 @@ import { useRecoilValue } from 'recoil';
 import { authState } from '../../store/atom';
 
 interface IDailyProps {
-  projectId: string;
+  planId: string;
   onResetView: () => void;
+  title: string;
+  date: string;
+  description: string;
 }
 
 interface ITask {
-  id: string;
+  taskId: string;
   text: string;
   completed: boolean;
+  planId: string;
 }
 
-export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
-  const [plan, setPlan] = useState<IPlans | null>(null);
+export default function DailyPlan({
+  planId,
+  onResetView,
+  title,
+  description,
+  date,
+}: IDailyProps) {
   const [inputTask, setInputTask] = useState<string>('');
   const [tasks, setTasks] = useState<ITask[]>([]);
   const { countryId } = useParams();
-  const currentUser = useRecoilValue(authState);
+  const user = useRecoilValue(authState);
 
   const [lastTaskVisible, setLastTaskVisible] = useState<DocumentData | null>(
     null
@@ -46,245 +50,111 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
   const [firstTaskVisible, setFirstTaskVisible] = useState<DocumentData | null>(
     null
   );
-  const [isNext, setIsNext] = useState(true);
+  const [allTasks, setAllTasks] = useState<ITask[]>([]);
+  const [isNext, setIsNext] = useState(false);
   const [isPrev, setIsPrev] = useState(false);
 
-  // Task 불러오기
-  const fetchTasks = (direction: 'next' | 'prev' | null = null) => {
-    if (!currentUser || !countryId || !projectId) return;
-
-    let taskQuery;
-
-    const taskDocRef = collection(
-      db,
-      'users',
-      currentUser.uid,
-      'countries',
-      countryId,
-      'plans',
-      projectId,
-      'tasks'
-    );
-
-    if (direction === 'next' && lastTaskVisible) {
-      taskQuery = query(
-        taskDocRef,
-        orderBy('createdAt'),
-        startAfter(lastTaskVisible),
-        limit(5)
-      );
-    } else if (direction === 'prev' && firstTaskVisible) {
-      taskQuery = query(
-        taskDocRef,
-        orderBy('createdAt'),
-        endBefore(firstTaskVisible),
-        limitToLast(5)
-      );
-    } else {
-      taskQuery = query(taskDocRef, orderBy('createdAt'), limit(5));
-    }
-
-    const unsubscribeTasks = onSnapshot(taskQuery, async (snapshot) => {
-      if (!snapshot.empty) {
-        const loadedTasks: ITask[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          text: doc.data().text,
-          completed: doc.data().completed,
-        }));
-        setTasks(loadedTasks);
-        setFirstTaskVisible(snapshot.docs[0]);
-        setLastTaskVisible(snapshot.docs[snapshot.docs.length - 1]);
-
-        if (direction === 'next') {
-          setIsPrev(true);
-          const nextTaskQuery = query(
-            taskDocRef,
-            orderBy('createdAt'),
-            startAfter(snapshot.docs[snapshot.docs.length - 1]),
-            limit(1)
-          );
-          const nextSnapshot = await getDocs(nextTaskQuery);
-          setIsNext(!nextSnapshot.empty);
-        } else if (direction === 'prev') {
-          const prevTaskQuery = query(
-            taskDocRef,
-            orderBy('createdAt'),
-            endBefore(snapshot.docs[0]),
-            limitToLast(1)
-          );
-          const prevSnapshot = await getDocs(prevTaskQuery);
-          setIsPrev(!prevSnapshot.empty);
-          setIsNext(true);
-        } else {
-          const nextTaskQuery = query(
-            taskDocRef,
-            orderBy('createdAt'),
-            startAfter(snapshot.docs[snapshot.docs.length - 1]),
-            limit(1)
-          );
-          const prevTaskQuery = query(
-            taskDocRef,
-            orderBy('createdAt'),
-            endBefore(snapshot.docs[0]),
-            limitToLast(1)
-          );
-          const [nextSnapshot, prevSnapshot] = await Promise.all([
-            getDocs(nextTaskQuery),
-            getDocs(prevTaskQuery),
-          ]);
-          setIsNext(!nextSnapshot.empty);
-          setIsPrev(!prevSnapshot.empty);
-        }
-      } else {
-        setIsNext(false);
-        setIsPrev(false);
-      }
-    });
-
-    return unsubscribeTasks;
-  };
-
-  useEffect(() => {
-    if (!currentUser || !countryId || !projectId) return;
-
-    const docRef = doc(
-      db,
-      'users',
-      currentUser.uid,
-      'countries',
-      countryId,
-      'plans',
-      projectId
-    );
-
-    // onSnapshot으로 문서의 변경사항을 실시간으로 수신
-    const unsubscribePlan = onSnapshot(docRef, (doc) => {
-      if (doc.exists()) {
-        setPlan({
-          id: doc.id,
-          title: doc.data().title,
-          createdAt: doc.data().createdAt,
-          userId: doc.data().userId,
-          description: doc.data().description,
-          username: doc.data().username,
-        });
-      } else {
-        console.log('No such document!');
-      }
-    });
-
-    // 할일 목록 불러오기
-    // const tasksQuery = query(
-    //   collection(docRef, 'tasks'),
-    //   orderBy('createdAt'),
-    //   limit(5)
-    // );
-    // const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
-    //   const loadedTasks: ITask[] = snapshot.docs.map((doc) => ({
-    //     id: doc.id,
-    //     text: doc.data().text,
-    //     completed: doc.data().completed,
-    //   }));
-    //   setTasks(loadedTasks);
-    // });
-
-    // 초기 할일 목록 불러오기
-    const unsubscribeTasks = fetchTasks();
-
-    // 컴포넌트 언마운트 시 구독 해제
-    return () => {
-      unsubscribePlan();
-      if (unsubscribeTasks) unsubscribeTasks();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, countryId, projectId]);
-
-  const toggleCompleted = async (taskId: string, isCompleted: boolean) => {
-    if (!currentUser || !countryId) return;
-
-    const taskDocRef = doc(
-      db,
-      'users',
-      currentUser.uid,
-      'countries',
-      countryId,
-      'plans',
-      projectId,
-      'tasks',
-      taskId
-    );
-    await updateDoc(taskDocRef, { completed: !isCompleted });
-  };
-
+  // Plan 삭제
   const deletePlan = async () => {
-    if (!currentUser || !countryId) return;
-
-    const docRef = doc(
-      db,
-      'users',
-      currentUser.uid,
-      'countries',
-      countryId,
-      'plans',
-      projectId
-    );
     try {
-      await deleteDoc(docRef);
+      await deleteDoc(doc(db, 'plans', planId));
+      console.log('Plan deleted');
       onResetView();
     } catch (e) {
       console.error('Error deleting document', e);
     }
   };
 
+  // Tasks 추가
   const addTask = async () => {
-    if (inputTask.trim() === '' || !currentUser || !countryId) return;
+    if (inputTask.trim() === '' || !user || !countryId) return;
 
-    const tasksCol = collection(
-      db,
-      'users',
-      currentUser.uid,
-      'countries',
-      countryId,
-      'plans',
-      projectId,
-      'tasks'
-    );
-    await addDoc(tasksCol, {
+    await addDoc(collection(db, 'tasks'), {
       createdAt: Date.now(),
       text: inputTask,
       completed: false,
+      planId: planId,
     });
     setInputTask('');
   };
 
+  // Tasks 삭제
   const deleteTask = async (taskId: string) => {
-    // const ok = confirm('할일을 삭제 하시겠습니까?');
-    // if (!ok || !currentUser || !countryId) return;
-    if (!currentUser || !countryId) return;
-
-    const taskDocRef = doc(
-      db,
-      'users',
-      currentUser.uid,
-      'countries',
-      countryId,
-      'plans',
-      projectId,
-      'tasks',
-      taskId
-    );
-    await deleteDoc(taskDocRef);
-    if (tasks.length === 1 && isPrev) {
-      fetchTasks('prev');
-    } else if (tasks.length === 1 && !isPrev) {
-      fetchTasks(null);
-    } else {
-      fetchTasks
+    try {
+      await deleteDoc(doc(db, 'tasks', taskId));
+      console.log('Task deleted');
+    } catch (e) {
+      console.log('Error deleting task: ', e);
     }
   };
 
-  const formattedDate = plan?.createdAt
-    ? new Date(plan?.createdAt).toLocaleDateString('ko-kr', {
+  // Completed Check
+  const toggleCompleted = async (taskId: string, isCompleted: boolean) => {
+    if (!user || !countryId) return;
+
+    const taskRef = doc(db, 'tasks', taskId);
+    await updateDoc(taskRef, { completed: !isCompleted });
+  };
+
+  // Tasks 불러오기
+  useEffect(() => {
+    if (!planId || !user) return;
+
+    const q = query(
+      collection(db, 'tasks'),
+      where('planId', '==', planId),
+      orderBy('createdAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const allTasks = snapshot.docs.map((doc) => ({
+        taskId: doc.id,
+        ...(doc.data() as Omit<ITask, 'taskId'>),
+      }));
+
+      // 전체 데이터 저장
+      setAllTasks(allTasks);
+      // 첫 페이지 데이터 설정
+      setTasks(allTasks.slice(0, 5));
+      setLastTaskVisible(allTasks[4]);
+      setFirstTaskVisible(allTasks[0]);
+      setIsNext(allTasks.length > 5);
+      setIsPrev(false);
+    });
+
+    return () => unsubscribe();
+  }, [planId, user]);
+
+  const handleNext = () => {
+    const currentIndex = allTasks.findIndex(
+      (task) => task.taskId === lastTaskVisible?.taskId
+    );
+    const newTasks = allTasks.slice(currentIndex + 1, currentIndex + 6);
+    setTasks(newTasks);
+    setLastTaskVisible(newTasks[newTasks.length - 1]);
+    setFirstTaskVisible(newTasks[0]);
+    setIsNext(currentIndex + 6 < allTasks.length);
+    setIsPrev(true);
+  };
+
+  const handlePrev = () => {
+    const currentIndex = allTasks.findIndex(
+      (task) => task.taskId === firstTaskVisible?.taskId
+    );
+    const newTasks = allTasks.slice(
+      Math.max(0, currentIndex - 5),
+      currentIndex
+    );
+    setTasks(newTasks);
+    setLastTaskVisible(newTasks[newTasks.length - 1]);
+    setFirstTaskVisible(newTasks[0]);
+    setIsPrev(currentIndex > 5);
+    setIsNext(true);
+  };
+
+  // Date 포멧
+  const formattedDate = date
+    ? new Date(date).toLocaleDateString('ko-kr', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -295,15 +165,16 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
     <Wrapper>
       <Header>
         <HeaderContainer>
-          <Title>{plan?.title}</Title>
+          <Title>{title}</Title>
           <DeleteBtn onClick={deletePlan}>삭제</DeleteBtn>
         </HeaderContainer>
         <Year>{formattedDate}</Year>
-        <Description>{plan?.description}</Description>
+        <Description>{description}</Description>
       </Header>
       <Todo>할일</Todo>
       <NewPlan>
         <Input
+          id="task"
           type='text'
           value={inputTask}
           onChange={(e) => setInputTask(e.target.value)}
@@ -313,12 +184,13 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
       <ListContainer>
         <List>
           {tasks.map((task) => (
-            <ListItem key={task.id}>
+            <ListItem key={task.taskId}>
               <ItemWrapper>
                 <ItemInput
                   type='checkbox'
                   checked={task.completed}
-                  onChange={() => toggleCompleted(task.id, task.completed)}
+                  id={task.taskId}
+                  onChange={() => toggleCompleted(task.taskId, task.completed)}
                 />
                 <span
                   style={{
@@ -328,15 +200,17 @@ export default function DailyPlan({ projectId, onResetView }: IDailyProps) {
                   {task.text}
                 </span>
               </ItemWrapper>
-              <DeleteBtn onClick={() => deleteTask(task.id)}>삭제</DeleteBtn>
+              <DeleteBtn onClick={() => deleteTask(task.taskId)}>
+                삭제
+              </DeleteBtn>
             </ListItem>
           ))}
         </List>
         <ButtonContainer>
-          <PrevButton onClick={() => fetchTasks('prev')} disabled={!isPrev}>
+          <PrevButton onClick={handlePrev} disabled={!isPrev}>
             이전
           </PrevButton>
-          <NextButton onClick={() => fetchTasks('next')} disabled={!isNext}>
+          <NextButton onClick={handleNext} disabled={!isNext}>
             다음
           </NextButton>
         </ButtonContainer>
@@ -415,9 +289,17 @@ const ButtonContainer = styled.div`
   gap: 20px;
 `;
 
-const PrevButton = styled.button``;
+const PrevButton = styled.button`
+  &:disabled {
+    opacity: 0.6;
+  }
+`;
 
-const NextButton = styled.button``;
+const NextButton = styled.button`
+  &:disabled {
+    opacity: 0.6;
+  }
+`;
 
 const List = styled.ul`
   padding: 1rem;

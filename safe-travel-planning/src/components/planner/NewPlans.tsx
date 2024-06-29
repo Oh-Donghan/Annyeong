@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useRecoilValue } from 'recoil';
 import styled from 'styled-components';
 import { authState } from '../../store/atom';
-import { addDoc, collection, doc } from 'firebase/firestore';
+import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import { useParams } from 'react-router-dom';
 
@@ -78,10 +78,10 @@ const Input = styled.input`
 const TextArea = styled(Input).attrs({ as: 'textarea' })``;
 
 interface IProjectProps {
-  onCancel: () => void;
+  onResetView: () => void;
 }
 
-export default function NewProject({ onCancel }: IProjectProps) {
+export default function NewPlans({ onResetView }: IProjectProps) {
   const user = useRecoilValue(authState);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -104,15 +104,15 @@ export default function NewProject({ onCancel }: IProjectProps) {
 
     try {
       setIsLoading(true);
-      const countryDocRef = doc(db, 'users', user.uid, 'countries', countryId);
-      const plansColRef = collection(countryDocRef, 'plans');
-      await addDoc(plansColRef, {
-        title,
-        description,
-        createdAt: date,
-        username: user.displayName || 'Anonymous',
+      await addDoc(collection(db, 'plans'), {
         userId: user.uid,
-      });
+        countryId: countryId,
+        title: title,
+        description: description,
+        date: date,
+        createdAt: Date.now(),
+        username: user.displayName || 'Anonymous',
+      })
       setTitle('');
       setDescription('');
       setDate('');
@@ -120,34 +120,41 @@ export default function NewProject({ onCancel }: IProjectProps) {
       console.log(e);
     } finally {
       setIsLoading(false);
+      onResetView();
     }
   };
 
   return (
     <Form onSubmit={onSubmit}>
       <ButtonBox>
-        <CancelBtn onClick={onCancel}>취소</CancelBtn>
+        <CancelBtn type='button' onClick={onResetView}>취소</CancelBtn>
         <SaveBtn type='submit'>{isLoading ? '저장중..' : '저장'}</SaveBtn>
       </ButtonBox>
       <InputBox>
         <Field>
-          <Label>제목</Label>
+          <Label htmlFor="title">제목</Label>
           <Input
+            id="title"
+            name="title"
             type='text'
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </Field>
         <Field>
-          <Label>설명</Label>
+          <Label htmlFor="description">설명</Label>
           <TextArea
+            id="description"
+            name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
         </Field>
         <Field>
-          <Label>날짜</Label>
+          <Label htmlFor="date">날짜</Label>
           <Input
+            id="date"
+            name="date"
             type='date'
             value={date}
             onChange={(e) => setDate(e.target.value)}
