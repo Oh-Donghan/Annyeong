@@ -40,7 +40,7 @@ const ButtonSection = styled.div`
 
 const SectionButton = styled.span<{ $isActive: boolean }>`
   width: 120px;
-  padding: 8px 0;
+  /* padding: 8px 0; */
   text-align: center;
   font-weight: bold;
   color: ${(props) =>
@@ -50,6 +50,7 @@ const SectionButton = styled.span<{ $isActive: boolean }>`
   border-radius: 5px;
   a {
     display: block;
+    padding: 8px 16px;
     /* opacity: ${props => props.$isActive ? 1 : 0.7}; */
   }
 `;
