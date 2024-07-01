@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { db } from "../../../firebase";
 import { useRecoilValue } from "recoil";
 import { authState } from "../../store/atom";
-import { useParams } from "react-router-dom";
 
 interface ITask {
   taskId: string;
@@ -13,14 +12,18 @@ interface ITask {
   planId: string;
 }
 
+interface IProps {
+  planId: string;
+  countryId: string | undefined;
+}
+
 const PAGE_SIZE = 7;
-export default function Tasks({ planId }: { planId: string }) {
+export default function Tasks({ planId, countryId }: IProps) {
   const user = useRecoilValue(authState);
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   // const [isLoading, setIsLoading] = useState(false);
-  const { countryId } = useParams();
 
   // Tasks 삭제
   const deleteTask = async (taskId: string) => {

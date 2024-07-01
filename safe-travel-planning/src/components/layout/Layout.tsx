@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { authState, isDarkAtom } from '../../store/atom';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { auth } from '../../../firebase';
+import Profile from "./Profile";
 
 const Header = styled.header`
   display: flex;
@@ -114,7 +115,7 @@ export default function Layout() {
           </BtnWrapper>
           <Log>
             {currentUser ? (
-              <span onClick={onLogOut}>Log out</span>
+              <Link to='/profile'>profile</Link>
             ) : (
               <Link to='/login'>Log in</Link>
             )}

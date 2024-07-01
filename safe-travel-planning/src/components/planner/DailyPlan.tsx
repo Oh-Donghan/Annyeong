@@ -80,7 +80,7 @@ export default function DailyPlan({
         />
         <AddBtn onClick={addTask}>추가</AddBtn>
       </NewPlan>
-      <Tasks planId={planId} />
+      <Tasks planId={planId} countryId={countryId} />
     </Wrapper>
   );
 }
