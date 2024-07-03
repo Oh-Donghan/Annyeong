@@ -1,9 +1,22 @@
-import { collection, deleteDoc, doc, getCountFromServer, getDocs, limit, orderBy, query, startAfter, updateDoc, where } from "firebase/firestore";
-import { useEffect, useState } from 'react';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getCountFromServer,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  startAfter,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { db } from "../../../firebase";
-import { useRecoilValue } from "recoil";
-import { authState } from "../../store/atom";
+import { db } from '../../../firebase';
+import { useRecoilValue } from 'recoil';
+import { authState } from '../../store/atom';
 
 interface ITask {
   taskId: string;
@@ -23,7 +36,8 @@ export default function Tasks({ planId, countryId }: IProps) {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  // const [isLoading, setIsLoading] = useState(false);
+  const [isNext, setIsNext] = useState(false);
+  const [isPrev, setIsPrev] = useState(false);
 
   // Tasks 삭제
   const deleteTask = async (taskId: string) => {
@@ -43,12 +57,63 @@ export default function Tasks({ planId, countryId }: IProps) {
     await updateDoc(taskRef, { completed: !isCompleted });
   };
 
+  const fetchTasks = useCallback(
+    async (page: number) => {
+      let q = query(
+        collection(db, 'tasks'),
+        where('planId', '==', planId),
+        orderBy('createdAt', 'asc'),
+        limit(PAGE_SIZE * page)
+      );
+
+      if (page > 1) {
+        const prevPage = (page - 1) * PAGE_SIZE;
+        const prevSnapshot = await getDocs(
+          query(
+            collection(db, 'tasks'),
+            where('planId', '==', planId),
+            orderBy('createdAt', 'asc'),
+            limit(prevPage)
+          )
+        );
+        const lastVisible = prevSnapshot.docs[prevSnapshot.docs.length - 1];
+        q = query(
+          collection(db, 'tasks'),
+          where('planId', '==', planId),
+          orderBy('createdAt', 'asc'),
+          startAfter(lastVisible),
+          limit(PAGE_SIZE)
+        );
+      }
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const tasks = snapshot.docs.map((doc) => {
+          const { text, completed, planId } = doc.data();
+          return {
+            taskId: doc.id,
+            text,
+            completed,
+            planId,
+          };
+        });
+        setTasks(tasks);
+        setCurrentPage(page);
+
+        // 버튼 상태 업데이트
+        setIsPrev(page > 1);
+        setIsNext(page < totalPages);
+      });
+
+      return unsubscribe;
+    },
+    [planId, totalPages]
+  );
+
   // Tasks 불러오기
   useEffect(() => {
     if (!planId || !user) return;
 
     const fetchTotalCount = async () => {
-      // setIsLoading(true);
       const q = query(collection(db, 'tasks'), where('planId', '==', planId));
       const snapshot = await getCountFromServer(q);
       const totalCount = snapshot.data().count;
@@ -58,52 +123,7 @@ export default function Tasks({ planId, countryId }: IProps) {
     };
 
     fetchTotalCount();
-  }, [planId, user]);
-
-  const fetchTasks = async (page: number) => {
-    // setIsLoading(true);
-    let q = query(
-      collection(db, 'tasks'),
-      where('planId', '==', planId),
-      orderBy('createdAt', 'asc'),
-      limit(PAGE_SIZE * page)
-    );
-
-    if (page > 1) {
-      const prevPage = (page - 1) * PAGE_SIZE;
-      const prevSnapshot = await getDocs(
-        query(
-          collection(db, 'tasks'),
-          where('planId', '==', planId),
-          orderBy('createdAt', 'asc'),
-          limit(prevPage)
-        )
-      );
-      const lastVisible = prevSnapshot.docs[prevSnapshot.docs.length - 1];
-      q = query(
-        collection(db, 'tasks'),
-        where('planId', '==', planId),
-        orderBy('createdAt', 'asc'),
-        startAfter(lastVisible),
-        limit(PAGE_SIZE)
-      );
-    }
-
-    const snapshot = await getDocs(q);
-    const tasks = snapshot.docs.map((doc) => {
-      const { text, completed, planId } = doc.data();
-      return {
-        taskId: doc.id,
-        text,
-        completed,
-        planId,
-      };
-    });
-
-    setTasks(tasks);
-    // setIsLoading(false);
-    setCurrentPage(page);
-  };
+  }, [fetchTasks, planId, user]);
 
   const handleNext = () => {
     if (currentPage < totalPages) {
@@ -116,8 +136,6 @@ export default function Tasks({ planId, countryId }: IProps) {
       fetchTasks(currentPage - 1);
     }
   };
-
-  // if (isLoading) return <div>Loading...</div>;
 
   return (
     <ListContainer>
@@ -144,8 +162,12 @@ export default function Tasks({ planId, countryId }: IProps) {
         ))}
       </List>
       <ButtonContainer>
-        <PrevButton onClick={handlePrev}>이전</PrevButton>
-        <NextButton onClick={handleNext}>다음</NextButton>
+        <PrevButton onClick={handlePrev} disabled={!isPrev}>
+          이전
+        </PrevButton>
+        <NextButton onClick={handleNext} disabled={!isNext}>
+          다음
+        </NextButton>
       </ButtonContainer>
     </ListContainer>
   );

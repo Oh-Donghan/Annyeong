@@ -12,6 +12,7 @@ export interface UserProps {
   uid: string;
   email: string | null;
   displayName: string | null;
+  photoURL: string | null;
 }
 
 export default function AuthProvider({ children }: AuthProps) {
@@ -24,6 +25,7 @@ export default function AuthProvider({ children }: AuthProps) {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
+          photoURL: user.photoURL,
         });
       } else {
         setAuthState(null);

@@ -7,7 +7,7 @@ import Plan from './Plan';
 import Gmap from '../components/Gmap/Gmap';
 import Planner from '../components/planner/Planner';
 import ForgetPassword from './ForgetPassword';
-import Profile from "../components/layout/Profile";
+import Profile from './Profile';
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +17,10 @@ export const router = createBrowserRouter([
       {
         path: '',
         element: <Home />,
+      },
+      {
+        path: '/profile',
+        element: <Profile />,
       },
       {
         path: '/country/:countryId',
@@ -29,8 +33,8 @@ export const router = createBrowserRouter([
           {
             path: 'planner',
             element: <Planner />,
-          }
-        ]
+          },
+        ],
       },
       {
         path: '/login',
@@ -44,10 +48,6 @@ export const router = createBrowserRouter([
         path: '/forget-password',
         element: <ForgetPassword />,
       },
-      {
-        path: '/profile',
-        element: <Profile />,
-      }
     ],
   },
 ]);

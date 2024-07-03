@@ -7,7 +7,8 @@ import { isDarkAtom } from './store/atom';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './routes/Router';
 import { auth } from '../firebase';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import LoadingScreen from "./components/layout/LoadingScreen";
 
 const GlobalStyle = createGlobalStyle`
   ${reset}
@@ -28,8 +29,10 @@ const GlobalStyle = createGlobalStyle`
 
 function App() {
   const isDark = useRecoilValue(isDarkAtom);
+  const [isLoading, setIsLoading] = useState(true);
   const init = async () => {
     await auth.authStateReady();
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -39,7 +42,7 @@ function App() {
   return (
     <ThemeProvider theme={isDark ? darkTheme : lightTheme}>
       <GlobalStyle />
-      <RouterProvider router={router} />
+      {isLoading ? <LoadingScreen /> : <RouterProvider router={router} />}
       <ReactQueryDevtools initialIsOpen={false} />
     </ThemeProvider>
   );

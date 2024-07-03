@@ -4,8 +4,6 @@ import { useRecoilValue, useSetRecoilState } from 'recoil';
 import styled from 'styled-components';
 import { authState, isDarkAtom } from '../../store/atom';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { auth } from '../../../firebase';
-import Profile from "./Profile";
 
 const Header = styled.header`
   display: flex;
@@ -89,13 +87,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const currentUser = useRecoilValue(authState);
 
-  const onLogOut = async () => {
-    const ok = confirm('로그아웃 하시겠습니까?');
-    if (ok) {
-      await auth.signOut();
-      navigate('/');
-    }
-  };
+ 
 
   const onHome = () => {
     navigate('/');

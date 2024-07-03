@@ -9,6 +9,120 @@ import LoadingScreen from '../components/layout/LoadingScreen';
 import Alert from '../components/layout/Alert';
 import Warning from '../components/layout/Warning';
 
+export default function Home() {
+  const [inputValue, setInputValue] = useState('');
+  const [warning, setWarning] = useState<number | null>(null);
+  const [filteredList, setFilteredList] = useState<CountryData[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const { isLoading, data, error, isError } = useQuery({
+    queryKey: ['countryData'],
+    queryFn: fetchData,
+    staleTime: 5 * 60 * 1000, // 5분 동안 데이터가 신선한 상태로 유지
+    gcTime: 10 * 60 * 1000, // 10분 동안 캐시 유지
+  });
+
+  useEffect(() => {
+    if (data) {
+      const filtered = data.filter(
+        (country: CountryData) =>
+          country.country_nm.includes(inputValue) ||
+          country.country_eng_nm
+            .toLowerCase()
+            .includes(inputValue.toLowerCase())
+      );
+      setFilteredList(filtered);
+      inputRef.current?.focus();
+    }
+  }, [inputValue, data]);
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (inputValue) {
+      const selectedCountry = data?.find(
+        (country) => country?.country_nm === inputValue
+      );
+      if (selectedCountry) {
+        const { alarm_lvl, country_eng_nm } = selectedCountry;
+        if (alarm_lvl === 4) {
+          alert('여행 금지 국가입니다');
+          return;
+        } else if (alarm_lvl === 3) {
+          alert('여행 위험 국가입니다');
+          navigate(
+            `/country/${encodeURIComponent(country_eng_nm.toLowerCase())}`
+          );
+        } else {
+          navigate(
+            `/country/${encodeURIComponent(country_eng_nm.toLowerCase())}`
+          );
+        }
+      }
+    }
+  };
+
+  const onClick = (countryName: string) => {
+    setInputValue(countryName);
+    // setInputValue('');
+    setFilteredList([]);
+    // console.log(countryEngName);
+    // if (countryAlarm >= 3) {
+    //   alert('여행 위험 국가입니다');
+    //   return
+    // }
+    // navigate(`/country/${encodeURIComponent(countryEngName.toLowerCase())}`);
+  };
+
+  return (
+    <>
+      {isLoading ? (
+        <LoadingScreen />
+      ) : isError ? (
+        <div>Error: {error.message}</div>
+      ) : (
+        <Wrapper>
+          <Title>안전한 여행 계획 - 안녕!</Title>
+          <Form onSubmit={onSubmit}>
+            <Input
+              onChange={onChange}
+              value={inputValue}
+              ref={inputRef}
+              placeholder='원하는 나라를 검색하세요.'
+              required
+            />
+            <button type='submit'>
+              <StyledFontAwesomeIcon icon={faMagnifyingGlass} />
+            </button>
+            {inputValue && filteredList.length > 0 && (
+              <Dropdown>
+                {filteredList?.map((country, index) => (
+                  <DropdownList
+                    key={country.country_iso_alp2}
+                    onClick={() => onClick(country.country_nm)}
+                    onMouseEnter={() => setWarning(index)}
+                    onMouseLeave={() => setWarning(null)}
+                  >
+                    {country.country_nm} ({country.country_eng_nm}){' '}
+                    <AlertMark $alarmLvl={country.alarm_lvl}></AlertMark>
+                    {warning === index && (
+                      <Warning alarmLvl={country.alarm_lvl} />
+                    )}
+                  </DropdownList>
+                ))}
+              </Dropdown>
+            )}
+          </Form>
+          <Alert />
+        </Wrapper>
+      )}
+    </>
+  );
+}
+
 const Wrapper = styled.div`
   height: 100%;
   width: 100%;
@@ -134,117 +248,3 @@ const AlertMark = styled.span<IAlarm>`
     }
   }};
 `;
-
-export default function Home() {
-  const [inputValue, setInputValue] = useState('');
-  const [warning, setWarning] = useState<number | null>(null);
-  const [filteredList, setFilteredList] = useState<CountryData[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
-  const { isLoading, data, error, isError } = useQuery({
-    queryKey: ['countryData'],
-    queryFn: fetchData,
-    staleTime: 5 * 60 * 1000, // 5분 동안 데이터가 신선한 상태로 유지
-    gcTime: 10 * 60 * 1000, // 10분 동안 캐시 유지
-  });
-
-  useEffect(() => {
-    if (data) {
-      const filtered = data.filter(
-        (country: CountryData) =>
-          country.country_nm.includes(inputValue) ||
-          country.country_eng_nm
-            .toLowerCase()
-            .includes(inputValue.toLowerCase())
-      );
-      setFilteredList(filtered);
-      inputRef.current?.focus();
-    }
-  }, [inputValue, data]);
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (inputValue) {
-      const selectedCountry = data?.find(
-        (country) => country?.country_nm === inputValue
-      );
-      if (selectedCountry) {
-        const { alarm_lvl, country_eng_nm } = selectedCountry;
-        if (alarm_lvl === 4) {
-          alert('여행 금지 국가입니다');
-          return;
-        } else if (alarm_lvl === 3) {
-          alert('여행 위험 국가입니다');
-          navigate(
-            `/country/${encodeURIComponent(country_eng_nm.toLowerCase())}`
-          );
-        } else {
-          navigate(
-            `/country/${encodeURIComponent(country_eng_nm.toLowerCase())}`
-          );
-        }
-      }
-    }
-  };
-
-  const onClick = (countryName: string) => {
-    setInputValue(countryName);
-    // setInputValue('');
-    setFilteredList([]);
-    // console.log(countryEngName);
-    // if (countryAlarm >= 3) {
-    //   alert('여행 위험 국가입니다');
-    //   return
-    // }
-    // navigate(`/country/${encodeURIComponent(countryEngName.toLowerCase())}`);
-  };
-
-  return (
-    <>
-      {isLoading ? (
-        <LoadingScreen />
-      ) : isError ? (
-        <div>Error: {error.message}</div>
-      ) : (
-        <Wrapper>
-          <Title>안전한 여행 계획 - 안녕!</Title>
-          <Form onSubmit={onSubmit}>
-            <Input
-              onChange={onChange}
-              value={inputValue}
-              ref={inputRef}
-              placeholder='원하는 나라를 검색하세요.'
-              required
-            />
-            <button type='submit'>
-              <StyledFontAwesomeIcon icon={faMagnifyingGlass} />
-            </button>
-            {inputValue && filteredList.length > 0 && (
-              <Dropdown>
-                {filteredList?.map((country, index) => (
-                  <DropdownList
-                    key={country.country_iso_alp2}
-                    onClick={() => onClick(country.country_nm)}
-                    onMouseEnter={() => setWarning(index)}
-                    onMouseLeave={() => setWarning(null)}
-                  >
-                    {country.country_nm} ({country.country_eng_nm}){' '}
-                    <AlertMark $alarmLvl={country.alarm_lvl}></AlertMark>
-                    {warning === index && (
-                      <Warning alarmLvl={country.alarm_lvl} />
-                    )}
-                  </DropdownList>
-                ))}
-              </Dropdown>
-            )}
-          </Form>
-          <Alert />
-        </Wrapper>
-      )}
-    </>
-  );
-}

@@ -109,6 +109,10 @@ const Title = styled.h1`
   font-size: 30px;
   font-weight: bold;
   color: ${(props) => props.theme.bgColor};
+  /* overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; */
+  /* width: 200px; */
 `;
 
 const Year = styled.p`
@@ -143,4 +147,6 @@ const Input = styled.input`
 
 const AddBtn = styled.button``;
 
-const DeleteBtn = styled.button``;
+const DeleteBtn = styled.button`
+  width: 60px;
+`;

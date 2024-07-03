@@ -102,6 +102,10 @@ const ListItem = styled.li<{ $isSelected: boolean }>`
     color: #dda94b;
     cursor: pointer;
   }
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  width: 200px;
 `;
 
 export interface IPlans {
@@ -132,6 +136,7 @@ export default function Planner() {
       collection(db, 'plans'),
       where('userId', '==', user.uid),
       where('countryId', '==', countryId),
+      orderBy('date', 'desc'),
       orderBy('createdAt', 'desc')
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
