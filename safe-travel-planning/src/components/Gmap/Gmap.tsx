@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import Places from './places';
 
 const GmapSection = styled.div`
   width: 90%;
@@ -8,6 +9,8 @@ const GmapSection = styled.div`
 
 export default function Gmap() {
   return (
-    <GmapSection>Gmap</GmapSection>
-  )
+    <GmapSection>
+      <Places />
+    </GmapSection>
+  );
 }

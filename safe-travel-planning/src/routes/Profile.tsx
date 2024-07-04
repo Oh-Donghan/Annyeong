@@ -69,6 +69,10 @@ export default function Profile() {
     }
   };
 
+  const onMovePlanner = (countryId: string) => {
+    navigate(`/country/${countryId}/planner`);
+  }
+
   return (
     <Wrapper>
       <AvatarUpload htmlFor='avatar'>
@@ -101,7 +105,7 @@ export default function Profile() {
       <PlanTitle>내가 작성한 일정</PlanTitle>
       <Plans>
         {plans.map((plan) => (
-          <Plan key={plan.id}>
+          <Plan key={plan.id} onClick={() => onMovePlanner(plan.countryId)}>
             <Title>{plan.title}</Title>
             <CountryName>{plan.countryId}</CountryName>
             <PlanDate>
@@ -192,6 +196,11 @@ const Plan = styled.div`
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border 0.3s ease-in-out;
+  &:hover {
+    border: 1px solid ${props => props.theme.pointColor}
+  }
 `;
 
 const CountryName = styled.span`
