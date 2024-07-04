@@ -4,10 +4,10 @@ import Home from './Home';
 import Login from './Login';
 import CreateAccount from './CreateAccount';
 import Plan from './Plan';
-import Gmap from '../components/Gmap/Gmap';
 import Planner from '../components/planner/Planner';
 import ForgetPassword from './ForgetPassword';
 import Profile from './Profile';
+import Gmap from "../components/Gmap/Gmap";
 
 export const router = createBrowserRouter([
   {

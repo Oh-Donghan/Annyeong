@@ -46,6 +46,7 @@ export default function Home() {
       const selectedCountry = data?.find(
         (country) => country?.country_nm === inputValue
       );
+
       if (selectedCountry) {
         const { alarm_lvl, country_eng_nm } = selectedCountry;
         if (alarm_lvl === 4) {

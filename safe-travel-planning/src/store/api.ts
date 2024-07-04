@@ -24,7 +24,7 @@ export const fetchData = async () => {
       allData = allData.concat(pageData.data);
     }
   }
-    console.log(allData);
+    // console.log(allData);
     return allData;
 };
 
