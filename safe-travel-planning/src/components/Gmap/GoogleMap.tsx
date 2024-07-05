@@ -1,15 +1,14 @@
 import { Loader } from '@googlemaps/js-api-loader';
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import GoogleAutoComplete from "./GoogleAutoComplete";
-import { useParams } from "react-router-dom";
-
+import GoogleAutoComplete from './GoogleAutoComplete';
+import { useParams } from 'react-router-dom';
 
 export default function GMap() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [marker, setMarker] = useState<google.maps.Marker | null>(null);
-  const {countryId} = useParams();
+  const { countryId } = useParams();
 
   useEffect(() => {
     const loader = new Loader({
@@ -17,26 +16,36 @@ export default function GMap() {
       version: 'weekly',
       libraries: ['places'],
     });
-    
-    loader.load().then(() => {
-      if (mapRef.current !== null) {
-        const geocoder = new google.maps.Geocoder();
 
-        geocoder.geocode({ address: countryId }, (results, status) => {
-          if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
-            const map = new google.maps.Map(mapRef.current!, {
-              center: results[0].geometry.location,
-              zoom: 6,
-            });
-            setMap(map);
-          } else {
-            console.error('Geocode was not successful for the following reason: ', status);
-          }
-        });
-      }
-    }).catch(e => {
-      console.error('Error loading Google Maps', e);
-    });
+    loader
+      .load()
+      .then(() => {
+        if (mapRef.current !== null) {
+          const geocoder = new google.maps.Geocoder();
+
+          geocoder.geocode({ address: countryId }, (results, status) => {
+            if (
+              status === google.maps.GeocoderStatus.OK &&
+              results &&
+              results[0]
+            ) {
+              const map = new google.maps.Map(mapRef.current!, {
+                center: results[0].geometry.location,
+                zoom: 6,
+              });
+              setMap(map);
+            } else {
+              console.error(
+                'Geocode was not successful for the following reason: ',
+                status
+              );
+            }
+          });
+        }
+      })
+      .catch((e) => {
+        console.error('Error loading Google Maps', e);
+      });
   }, [countryId]);
 
   const handleSelect = (position: google.maps.LatLngLiteral) => {
@@ -54,11 +63,13 @@ export default function GMap() {
         setMarker(newMarker);
       }
     }
-  }
+  };
 
   return (
     <>
-      {map && <GoogleAutoComplete onSelect={handleSelect} />}
+      {map && (
+        <GoogleAutoComplete onSelect={handleSelect} countryId={countryId!} />
+      )}
       <MapContainer ref={mapRef}></MapContainer>
     </>
   );
@@ -66,5 +77,5 @@ export default function GMap() {
 
 const MapContainer = styled.div`
   width: 100%;
-  height: 500px;
+  height: 100%;
 `;
