@@ -29,6 +29,7 @@ const Section = styled.div`
   align-items: center;
   justify-content: center;
   max-width: 1280px;
+  margin-bottom: 100px;
 `;
 
 const ButtonSection = styled.div`

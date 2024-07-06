@@ -3,7 +3,7 @@ import { getCode } from 'country-list';
 import styled from "styled-components";
 
 interface PlaceProps {
-  onSelect: (position: google.maps.LatLngLiteral) => void;
+  onSelect: (selection: { latLng: google.maps.LatLngLiteral, placeId: string}) => void;
   countryId: string;
 }
 
@@ -46,7 +46,7 @@ const GoogleAutoComplete: React.FC<PlaceProps> = ({ onSelect, countryId }) => {
   };
 
   // 검색해서 나온 리스트를 클릭하면 호출
-  const handleSelect = async (description: string) => {
+  const handleSelect = async (description: string, placeId: string) => {
     setValue('');
     setSuggestions([]);
 
@@ -58,7 +58,7 @@ const GoogleAutoComplete: React.FC<PlaceProps> = ({ onSelect, countryId }) => {
       }, (results, status) => {
         if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
           const { lat, lng } = results[0].geometry.location;
-          onSelect({ lat: lat(), lng: lng() });
+          onSelect({ latLng: {lat: lat(), lng: lng()}, placeId});
         }
       });
     } catch (error) {
@@ -72,7 +72,7 @@ const GoogleAutoComplete: React.FC<PlaceProps> = ({ onSelect, countryId }) => {
         {suggestions.map((suggestion) => {
           const { place_id, structured_formatting: { main_text, secondary_text } } = suggestion;
           return (
-            <ListItem key={place_id} onClick={() => handleSelect(suggestion.description)}>
+            <ListItem key={place_id} onClick={() => handleSelect(suggestion.description, suggestion.place_id)}>
               {main_text} {secondary_text}
             </ListItem>
           );
@@ -102,12 +102,12 @@ const Wrapper = styled.div`
 
 const Input = styled.input`
   width: 300px;
-  /* height: 30px; */
   padding: 8px 10px;
   background-color: ${props => props.theme.textColor};
   color:${props => props.theme.bgColor};
   outline: none;
   font-size: 16px;
+  border-radius: 5px;
 `
 
 const List = styled.ul`
@@ -123,6 +123,7 @@ const List = styled.ul`
   z-index: 100;
   padding: 5px;
   gap: 5px;
+  border-radius: 5px;
 `
 
 const ListItem = styled.li`

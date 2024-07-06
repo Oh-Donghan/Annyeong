@@ -2,9 +2,10 @@ import styled from 'styled-components';
 import GMap from "./GoogleMap";
 
 const GmapSection = styled.div`
+  position: relative;
   width: 90%;
   height: 500px;
-  position: relative;
+  margin-bottom: 100px;
 `;
 
 export default function Gmap() {
