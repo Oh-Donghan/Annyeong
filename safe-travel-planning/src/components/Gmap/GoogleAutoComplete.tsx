@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { getCode } from 'country-list';
 import styled from "styled-components";
+import { debounce } from "lodash";
 
 interface PlaceProps {
   onSelect: (selection: { latLng: google.maps.LatLngLiteral, placeId: string}) => void;
@@ -15,17 +16,16 @@ const GoogleAutoComplete: React.FC<PlaceProps> = ({ onSelect, countryId }) => {
   // Places의 AutocompleteService 저장 상태 - 주소 자동완성 요청을 보냄
   const [service, setService] = useState<google.maps.places.AutocompleteService | null>(null);
   const countryCode = getCode(countryId) || countryId.toUpperCase();
-
+  
   useEffect(() => {
     if (!service) {
       setService(new google.maps.places.AutocompleteService());
     }
   }, [service]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    setValue(inputValue);
-
+  // 과도한 검색 호출을 방지하기위한 디바운스 함수
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleInput = useCallback(debounce((inputValue: string) => {
     if (inputValue.length > 0 && service) {
       service.getPlacePredictions(
         {
@@ -43,6 +43,12 @@ const GoogleAutoComplete: React.FC<PlaceProps> = ({ onSelect, countryId }) => {
     } else {
       setSuggestions([]);
     }
+  }, 300), [service, countryCode]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    setValue(inputValue);
+    handleInput(inputValue);
   };
 
   // 검색해서 나온 리스트를 클릭하면 호출
@@ -86,7 +92,7 @@ const GoogleAutoComplete: React.FC<PlaceProps> = ({ onSelect, countryId }) => {
       <Input
         type='text'
         value={value}
-        onChange={handleInput}
+        onChange={handleChange}
         placeholder='Search for places'
       />
       {renderSuggestions()}
