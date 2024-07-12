@@ -1,30 +1,27 @@
-# React + TypeScript + Vite
+안전한 여행 계획 - 안녕!
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 구글 API와 외교부 국가 / 지역별 여행경보 API
 
-Currently, two official plugins are available:
+검색창에 국가명을 입력하면 해당 input에 value에 매칭되어 리스트가 나오고
+여행 위험도에따라 글자색이나 배경색(아니면 오른쪽에 동그라미로 색깔표시)을 위험 단계에 따라 나누어서 보여준다.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+위험 단계가 빨간색이면 클릭이나 엔터를 쳤을시, 모달창으로(시간이 없으면 alert) 여행 위험 국가입니다. 표시가 나오고 검색창 초기화.
 
-## Expanding the ESLint configuration
+위험 단계가 노란색이면 여행 경고 지역입니다 모달창이 뜨고 클릭이나 엔터시 계획창으로 이동
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+위험 단계가 낮으면 초록, 파랑으로 보이게 하고 모달창 없이 바로 이동
 
-- Configure the top-level `parserOptions` property like this:
+### 여행 계획 창
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+구글맵 (Places API) 를 활용하여 인풋으로 넘겨받은 해당 국가의 지도가 뜨고, AutoComplete API를 활용하여 지도 검색을 할 수 있다
+(이때 다른 국가를 검색하면 경고후 메인 페이지로 이동하거나, 메인 페이지 검색창 처럼 모달이 뜨고 지도 변경)
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Place Detail API를 활용하여 검색한 장소의 이름, 별점, 리뷰, 주소, 위치 좌표, 사진등을 표시
+
+### 여행 계획 TODO리스트
+
+지도컴포넌트 아래에 텍스트를 입력할 수 있게 하여 여행계획을 짤 수 있게 만든다.
+todo리스트 처럼 만들 예정이고 체크박스를 체크하면 해당 일정에 줄이가거나 할 예정
+여행계획은 로컬스토리지에 저장되게 할 것
+(계획을 계속 확인하기위해 회원 가입후 로그인 해야함!
+로그인을 하지 않으면 TODO리스트에 텍스트 입력 X, placeholder로 "로그인후 이용해주세요" 넣기)
