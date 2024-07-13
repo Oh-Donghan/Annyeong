@@ -114,7 +114,7 @@ export default function GMap() {
   const handleSelect = ({ latLng, placeId }: SelectData) => {
     if (map) {
       map.setCenter(latLng);
-      map.setZoom(15);
+      map.setZoom(18);
 
       if (marker) marker.setMap(null);
       if (infoWindow) infoWindow.close();
