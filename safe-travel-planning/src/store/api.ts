@@ -9,7 +9,7 @@ export interface CountryData {
 }
 
 const apiKey = import.meta.env.VITE_ALERT_API_KEY;
-const COUNTRY_URL = `http://apis.data.go.kr/1262000/TravelAlarmService2/getTravelAlarmList2?serviceKey=${apiKey}`;
+const COUNTRY_URL = `https://apis.data.go.kr/1262000/TravelAlarmService2/getTravelAlarmList2?serviceKey=${apiKey}`;
 
 export const fetchData = async () => {
   const numOfRows = 100;
